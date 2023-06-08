@@ -17,7 +17,7 @@ const verifyJWT = (req, res, next) => {
     }
     const token = authorization.split(' ')[1]
     jwt.verify(token, process.env.ACCESSTOKEN, (err, decoded) => {
-        console.log(err,decoded);
+        // console.log(err,decoded);
         if (err) {
             return res.status(403).send({ error: true, message: 'Unauthorized Access' })
         }
@@ -125,6 +125,7 @@ async function run() {
             const result = await userCollection.deleteOne(query)
             res.send(result);
         })
+        //Creating Admin 
         app.get('/users/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             if (req.decoded.email !== email) {
@@ -144,6 +145,30 @@ async function run() {
                     role: 'admin'
                 }
             }
+            const result = await userCollection.updateOne(filter, updateDoc)
+            res.send(result)
+        })
+        //Creating Instructor
+        app.get('/users/instructor/:email', async (req, res) => {
+            const email = req.params.email;
+            // if (req.decoded.email !== email) {
+            //     res.send({ admin: false })
+            // }
+            const query = { email: email }
+            const user = await userCollection.findOne(query);
+            const result = { instructor: user?.role === 'instructor' } 
+            res.send(result);
+
+        })
+        app.patch("/users/instructor/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    role: 'instructor'
+                }
+            }
+            console.log(updateDoc, id);
             const result = await userCollection.updateOne(filter, updateDoc)
             res.send(result)
         })
