@@ -113,11 +113,10 @@ async function run() {
                 }
             }
             const result = await classCollection.updateOne(filter, updateDoc)
-            // console.log(result);
             res.send(result)
         })
 
-        //Cart Add and delete Information 
+        //Cart Add and delete Information  section
         app.get('/carts', verifyJWT, async (req, res) => {
             const email = req.query.email;
 
