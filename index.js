@@ -74,11 +74,34 @@ async function run() {
             const result = await classCollection.find().toArray();
             res.send(result);
         })
+        app.get('/class/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const result = await classCollection.find(query).toArray()
+            res.send(result)
+        })
+        app.post('/class', async (req, res) => {
+            const body = req.body;
+            const result = await classCollection.insertOne(body)
+            res.send(result)
+        })
+        app.patch('/class/pending/:id', async(req, res)=>{
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+          
+            const updateDoc = {
+                $set: {
+                    status: 'approved'
+                }
+            }
+            const result = await classCollection.updateOne(filter, updateDoc)
+            res.send(result)
+        })
 
         //Cart Add and delete Information 
         app.get('/carts', verifyJWT, async (req, res) => {
             const email = req.query.email;
-           
+
             if (!email) {
                 res.send([])
             }
@@ -149,14 +172,14 @@ async function run() {
             res.send(result)
         })
         //Creating Instructor
-        app.get('/users/instructor/:email', async (req, res) => {
+        app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
-            // if (req.decoded.email !== email) {
-            //     res.send({ admin: false })
-            // }
+            if (req.decoded.email !== email) {
+                res.send({ admin: false })
+            }
             const query = { email: email }
             const user = await userCollection.findOne(query);
-            const result = { instructor: user?.role === 'instructor' } 
+            const result = { instructor: user?.role === 'instructor' }
             res.send(result);
 
         })
