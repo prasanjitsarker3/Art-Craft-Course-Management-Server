@@ -4,6 +4,7 @@ const cors = require('cors')
 const port = process.env.PORT || 5000;
 require('dotenv').config()
 var jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.PAYMENT_SECK)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 //Middle Ware  
 app.use(cors())
@@ -47,6 +48,7 @@ async function run() {
         const classCollection = client.db("artCraftDB").collection("classes");
         const cartCollection = client.db("artCraftDB").collection("carts");
         const userCollection = client.db("artCraftDB").collection("users");
+        const paymentCollection = client.db("artCraftDB").collection("payment");
 
         //JWT 
         app.post('/jwt', (req, res) => {
@@ -71,12 +73,12 @@ async function run() {
             res.send(result)
         })
         // Classes Information & Collection
-        app.get('/classes', async(req, res)=>{
-            const result= await classCollection.find().toArray();
+        app.get('/classes', async (req, res) => {
+            const result = await classCollection.find().toArray();
             res.send(result)
         })
         app.get('/class', async (req, res) => {
-            const query={status: 'approved'}
+            const query = { status: 'approved' }
             const result = await classCollection.find(query).toArray();
             res.send(result);
         })
@@ -91,10 +93,10 @@ async function run() {
             const result = await classCollection.insertOne(body)
             res.send(result)
         })
-        app.patch('/class/pending/:id', async(req, res)=>{
+        app.patch('/class/pending/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) }
-          
+
             const updateDoc = {
                 $set: {
                     status: 'approved'
@@ -103,10 +105,10 @@ async function run() {
             const result = await classCollection.updateOne(filter, updateDoc)
             res.send(result)
         })
-        app.patch('/class/approved/:id', async(req, res)=>{
+        app.patch('/class/approved/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) }
-          
+
             const updateDoc = {
                 $set: {
                     status: 'deny'
@@ -136,7 +138,12 @@ async function run() {
             const result = await cartCollection.insertOne(item);
             res.send(result)
         })
-
+        app.get('/carts/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await cartCollection.findOne(query);
+            res.send(result);
+        })
         app.delete('/carts/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -213,7 +220,30 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc)
             res.send(result)
         })
-
+        //Create Payment Intent
+        app.post('/createPayment', verifyJWT, async (req, res) => {
+            const { price } = req.body;
+            const amount = parseInt(price * 100);
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'INR',
+                payment_method_types: ['card']
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
+        app.get('/payments', async (req, res) => {
+            const result = await paymentCollection.find().sort({ date: -1 }).toArray();
+            res.send(result)
+        })
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentCollection.insertOne(payment);
+            // const query = { _id: { payment: clsId } }
+            // const deleteResult = await cartCollection.deleteOne(query)
+            res.send(result)
+        })
 
 
         // Send a ping to confirm a successful connection
