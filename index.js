@@ -79,7 +79,7 @@ async function run() {
         })
         app.get('/class', async (req, res) => {
             const query = { status: 'approved' }
-            const result = await classCollection.find(query).toArray();
+            const result = await classCollection.find(query).sort({enroll: -1}).toArray();
             res.send(result);
         })
         app.get('/class/:email', async (req, res) => {
@@ -151,7 +151,10 @@ async function run() {
             res.send(result)
         })
         //User Collection and Information
-
+        app.get('/userAll', verifyJWT, async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        })
 
         app.get('/users', verifyJWT, async (req, res) => {
             const result = await userCollection.find().toArray();
@@ -220,6 +223,13 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc)
             res.send(result)
         })
+
+        app.get('/InsUser', async (req, res) => {
+            const query = { role: "instructor" }
+            const result = await userCollection.find(query).toArray();
+            res.send(result);
+
+        })
         //Create Payment Intent
         app.post('/createPayment', verifyJWT, async (req, res) => {
             const { price } = req.body;
@@ -233,16 +243,38 @@ async function run() {
                 clientSecret: paymentIntent.client_secret
             })
         })
-        app.get('/payments', async (req, res) => {
-            const result = await paymentCollection.find().sort({ date: -1 }).toArray();
+        app.get('/payments/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const result = await paymentCollection.find(query).sort({ $natural: -1 }).toArray();
             res.send(result)
         })
         app.post('/payments', async (req, res) => {
             const payment = req.body;
             const result = await paymentCollection.insertOne(payment);
+            const query = { _id: new ObjectId(payment.clsId) }
+            const deleteResult = await cartCollection.deleteOne(query)
+            console.log("Post Seats",payment.seats);
+            const seats = payment.seats - 1;
+            console.log("new seats",seats);
+            const enrolled = parseInt(payment.enrolledStudent);
+            console.log("First", enrolled);
+            const enrolledStudents = enrolled + 1;
+            console.log("now", enrolledStudents); 
+            // console.log(payment.classIds);
+            const filter = { _id: new ObjectId(payment.classIds)}
+            console.log(filter);
+            const updateDoc = {
+                $set: {
+                    seats: seats,
+                    enroll: enrolledStudents
+                },
+            };
+            const updateResult = await classCollection.updateOne(filter, updateDoc)
+            console.log(updateResult);
             // const query = { _id: { payment: clsId } }
             // const deleteResult = await cartCollection.deleteOne(query)
-            res.send(result)
+            res.send({ result, deleteResult, updateResult })
         })
 
 
