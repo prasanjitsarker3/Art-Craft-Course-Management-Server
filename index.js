@@ -259,7 +259,6 @@ async function run() {
             const enrolled = parseInt(payment.enrolledStudent);
             const enrolledStudents = enrolled + 1;
             console.log("now", enrolledStudents); 
-            // console.log(payment.classIds);
             const filter = { _id: new ObjectId(payment.classIds)}
             console.log(filter);
             const updateDoc = {
