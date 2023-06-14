@@ -257,7 +257,6 @@ async function run() {
             const seats = payment.seats - 1;
             console.log("new seats",seats);
             const enrolled = parseInt(payment.enrolledStudent);
-            console.log("First", enrolled);
             const enrolledStudents = enrolled + 1;
             console.log("now", enrolledStudents); 
             // console.log(payment.classIds);
