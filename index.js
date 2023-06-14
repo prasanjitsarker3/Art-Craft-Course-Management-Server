@@ -42,7 +42,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
         const instructorCollection = client.db("artCraftDB").collection("instructor");
         const classCollection = client.db("artCraftDB").collection("classes");
         const cartCollection = client.db("artCraftDB").collection("carts");
@@ -257,8 +257,10 @@ async function run() {
             const seats = payment.seats - 1;
             console.log("new seats",seats);
             const enrolled = parseInt(payment.enrolledStudent);
+
             const enrolledStudents = enrolled + 1;
             console.log("now", enrolledStudents); 
+            // console.log(payment.classIds);
             const filter = { _id: new ObjectId(payment.classIds)}
             console.log(filter);
             const updateDoc = {
