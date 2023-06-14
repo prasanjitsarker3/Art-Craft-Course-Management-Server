@@ -18,7 +18,6 @@ const verifyJWT = (req, res, next) => {
     }
     const token = authorization.split(' ')[1]
     jwt.verify(token, process.env.ACCESSTOKEN, (err, decoded) => {
-        // console.log(err,decoded);
         if (err) {
             return res.status(403).send({ error: true, message: 'Unauthorized Access' })
         }
